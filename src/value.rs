@@ -531,9 +531,18 @@ mod tests {
 
     #[test]
     fn coerce_bool_from_string() {
-        assert_eq!(bool::coerce_from(Value::String("true".into())).unwrap(), true);
-        assert_eq!(bool::coerce_from(Value::String("false".into())).unwrap(), false);
-        assert_eq!(bool::coerce_from(Value::String("TRUE".into())).unwrap(), true);
+        assert_eq!(
+            bool::coerce_from(Value::String("true".into())).unwrap(),
+            true
+        );
+        assert_eq!(
+            bool::coerce_from(Value::String("false".into())).unwrap(),
+            false
+        );
+        assert_eq!(
+            bool::coerce_from(Value::String("TRUE".into())).unwrap(),
+            true
+        );
         assert_eq!(bool::coerce_from(Value::String("1".into())).unwrap(), true);
         assert_eq!(bool::coerce_from(Value::String("0".into())).unwrap(), false);
         assert!(bool::coerce_from(Value::String("maybe".into())).is_err());
@@ -585,31 +594,16 @@ mod tests {
 
     #[test]
     fn coerce_string_from_scalars() {
-        assert_eq!(
-            String::coerce_from(Value::Int(42)).unwrap(),
-            "42"
-        );
-        assert_eq!(
-            String::coerce_from(Value::Float(3.14)).unwrap(),
-            "3.14"
-        );
-        assert_eq!(
-            String::coerce_from(Value::Bool(true)).unwrap(),
-            "true"
-        );
-        assert_eq!(
-            String::coerce_from(Value::Null).unwrap(),
-            "null"
-        );
+        assert_eq!(String::coerce_from(Value::Int(42)).unwrap(), "42");
+        assert_eq!(String::coerce_from(Value::Float(3.14)).unwrap(), "3.14");
+        assert_eq!(String::coerce_from(Value::Bool(true)).unwrap(), "true");
+        assert_eq!(String::coerce_from(Value::Null).unwrap(), "null");
     }
 
     #[test]
     fn coerce_string_from_data_utf8() {
         let bytes = "hello".as_bytes().to_vec();
-        assert_eq!(
-            String::coerce_from(Value::Data(bytes)).unwrap(),
-            "hello"
-        );
+        assert_eq!(String::coerce_from(Value::Data(bytes)).unwrap(), "hello");
     }
 
     #[test]
@@ -695,11 +689,14 @@ mod tests {
 
         let nested = Value::Object({
             let mut m = HashMap::new();
-            m.insert("arr".into(), Value::Array(vec![
-                Value::Object(inner.clone()),
-                Value::String("hello".into()),
-                Value::Null,
-            ]));
+            m.insert(
+                "arr".into(),
+                Value::Array(vec![
+                    Value::Object(inner.clone()),
+                    Value::String("hello".into()),
+                    Value::Null,
+                ]),
+            );
             m.insert("flag".into(), Value::Bool(true));
             m
         });

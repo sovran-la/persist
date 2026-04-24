@@ -3,9 +3,9 @@ use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use crate::value::Value;
 use crate::error::Error;
 use crate::store::Store;
+use crate::value::Value;
 
 /// Serialization format for file-backed stores.
 pub trait Format: Send + Sync {
@@ -168,10 +168,7 @@ pub(crate) mod tests {
 
     impl Format for TestFormat {
         fn serialize(data: &HashMap<String, Value>) -> Result<String, Error> {
-            let mut lines: Vec<String> = data
-                .iter()
-                .map(|(k, v)| format!("{k}={v}"))
-                .collect();
+            let mut lines: Vec<String> = data.iter().map(|(k, v)| format!("{k}={v}")).collect();
             lines.sort(); // deterministic output
             Ok(lines.join("\n"))
         }
@@ -182,9 +179,9 @@ pub(crate) mod tests {
                 if line.trim().is_empty() {
                     continue;
                 }
-                let (key, val) = line.split_once('=').ok_or_else(|| {
-                    Error::Parse(format!("invalid line: {line}"))
-                })?;
+                let (key, val) = line
+                    .split_once('=')
+                    .ok_or_else(|| Error::Parse(format!("invalid line: {line}")))?;
                 // Simple: treat everything as a string for testing
                 map.insert(key.to_owned(), Value::String(val.to_owned()));
             }

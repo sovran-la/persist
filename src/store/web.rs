@@ -155,7 +155,6 @@ fn js_err(value: wasm_bindgen::JsValue) -> Error {
     Error::Custom(format!("localStorage error: {:?}", value))
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;

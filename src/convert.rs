@@ -101,9 +101,8 @@ mod json {
                 // DATA_SENTINEL and the value is a hex string.
                 if map.len() == 1 {
                     if let Some(JsonValue::String(hex)) = map.get(DATA_SENTINEL) {
-                        let bytes = hex_decode(hex).ok_or_else(|| {
-                            Error::Parse("invalid hex in Data sentinel".into())
-                        })?;
+                        let bytes = hex_decode(hex)
+                            .ok_or_else(|| Error::Parse("invalid hex in Data sentinel".into()))?;
                         return Ok(Value::Data(bytes));
                     }
                 }
@@ -123,8 +122,8 @@ mod json {
     }
 
     pub(crate) fn json_string_to_value(s: &str) -> Result<Value, Error> {
-        let json: JsonValue = serde_json::from_str(s)
-            .map_err(|e| Error::Parse(format!("parse JSON: {e}")))?;
+        let json: JsonValue =
+            serde_json::from_str(s).map_err(|e| Error::Parse(format!("parse JSON: {e}")))?;
         json_to_value(json)
     }
 }

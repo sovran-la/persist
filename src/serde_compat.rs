@@ -179,11 +179,7 @@ impl From<serde_json::Value> for Value {
                         }
                     }
                 }
-                Value::Object(
-                    obj.into_iter()
-                        .map(|(k, v)| (k, Value::from(v)))
-                        .collect(),
-                )
+                Value::Object(obj.into_iter().map(|(k, v)| (k, Value::from(v))).collect())
             }
         }
     }
@@ -207,9 +203,9 @@ impl From<Value> for serde_json::Value {
                 );
                 serde_json::Value::Object(map)
             }
-            Value::Array(arr) => serde_json::Value::Array(
-                arr.into_iter().map(serde_json::Value::from).collect(),
-            ),
+            Value::Array(arr) => {
+                serde_json::Value::Array(arr.into_iter().map(serde_json::Value::from).collect())
+            }
             Value::Object(obj) => serde_json::Value::Object(
                 obj.into_iter()
                     .map(|(k, v)| (k, serde_json::Value::from(v)))
@@ -339,14 +335,8 @@ mod tests {
             Value::from(serde_json::Value::Bool(true)),
             Value::Bool(true)
         );
-        assert_eq!(
-            Value::from(serde_json::json!(42)),
-            Value::Int(42)
-        );
-        assert_eq!(
-            Value::from(serde_json::json!(3.14)),
-            Value::Float(3.14)
-        );
+        assert_eq!(Value::from(serde_json::json!(42)), Value::Int(42));
+        assert_eq!(Value::from(serde_json::json!(3.14)), Value::Float(3.14));
         assert_eq!(
             Value::from(serde_json::json!("hello")),
             Value::String("hello".into())
@@ -355,7 +345,10 @@ mod tests {
 
     #[test]
     fn into_serde_json_primitives() {
-        assert_eq!(serde_json::Value::from(Value::Null), serde_json::Value::Null);
+        assert_eq!(
+            serde_json::Value::from(Value::Null),
+            serde_json::Value::Null
+        );
         assert_eq!(
             serde_json::Value::from(Value::Bool(true)),
             serde_json::Value::Bool(true)
@@ -396,7 +389,10 @@ mod tests {
             Value::Bool(true),
             Value::Null,
         ]);
-        assert_eq!(serde_json::Value::from(v), serde_json::json!([1, "two", true, null]));
+        assert_eq!(
+            serde_json::Value::from(v),
+            serde_json::json!([1, "two", true, null])
+        );
     }
 
     #[test]

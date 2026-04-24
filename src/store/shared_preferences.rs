@@ -145,9 +145,9 @@ impl Store for SharedPreferencesStore {
         match type_tag.as_str() {
             TAG_BOOL => Ok(Some(Value::Bool(prefs_get_bool(env, &prefs, key)?))),
             TAG_INT => Ok(Some(Value::Int(prefs_get_long(env, &prefs, key)?))),
-            TAG_FLOAT => Ok(Some(Value::Float(
-                f64::from_bits(prefs_get_long(env, &prefs, key)? as u64),
-            ))),
+            TAG_FLOAT => Ok(Some(Value::Float(f64::from_bits(
+                prefs_get_long(env, &prefs, key)? as u64,
+            )))),
             TAG_STRING => {
                 let s = prefs_get_string(env, &prefs, key)?.ok_or_else(|| orphan_tag(key))?;
                 Ok(Some(Value::String(s)))
@@ -292,10 +292,7 @@ fn shared_preferences<'local>(
 }
 
 /// `SharedPreferences.edit() -> SharedPreferences.Editor`.
-fn prefs_edit<'local>(
-    env: &mut JNIEnv<'local>,
-    prefs: &JObject,
-) -> Result<JObject<'local>, Error> {
+fn prefs_edit<'local>(env: &mut JNIEnv<'local>, prefs: &JObject) -> Result<JObject<'local>, Error> {
     env.call_method(
         prefs,
         "edit",
@@ -323,11 +320,7 @@ fn prefs_contains(env: &mut JNIEnv, prefs: &JObject, key: &str) -> Result<bool, 
 
 /// `SharedPreferences.getString(key, null)`. Returns `None` when the key
 /// isn't present or the stored value is null.
-fn prefs_get_string(
-    env: &mut JNIEnv,
-    prefs: &JObject,
-    key: &str,
-) -> Result<Option<String>, Error> {
+fn prefs_get_string(env: &mut JNIEnv, prefs: &JObject, key: &str) -> Result<Option<String>, Error> {
     let k = env.new_string(key).map_err(jni_err)?;
     let null_default: JObject = JObject::null();
     let result = env
@@ -378,7 +371,6 @@ fn prefs_get_long(env: &mut JNIEnv, prefs: &JObject, key: &str) -> Result<i64, E
     .map_err(jni_err)
 }
 
-
 fn editor_put_bool(
     env: &mut JNIEnv,
     editor: &JObject,
@@ -396,12 +388,7 @@ fn editor_put_bool(
     Ok(())
 }
 
-fn editor_put_long(
-    env: &mut JNIEnv,
-    editor: &JObject,
-    key: &str,
-    value: i64,
-) -> Result<(), Error> {
+fn editor_put_long(env: &mut JNIEnv, editor: &JObject, key: &str, value: i64) -> Result<(), Error> {
     let k = env.new_string(key).map_err(jni_err)?;
     env.call_method(
         editor,
@@ -412,7 +399,6 @@ fn editor_put_long(
     .map_err(jni_err)?;
     Ok(())
 }
-
 
 fn editor_put_string(
     env: &mut JNIEnv,
@@ -579,7 +565,10 @@ mod tests {
             assert_eq!(store.get("min").unwrap(), Some(Value::Float(f64::MIN)));
 
             store.set("tiny", Value::Float(f64::MIN_POSITIVE)).unwrap();
-            assert_eq!(store.get("tiny").unwrap(), Some(Value::Float(f64::MIN_POSITIVE)));
+            assert_eq!(
+                store.get("tiny").unwrap(),
+                Some(Value::Float(f64::MIN_POSITIVE))
+            );
         }
 
         #[test]
@@ -602,15 +591,9 @@ mod tests {
             let store = fresh_store("data");
             let bytes = vec![0u8, 1, 2, 3, 255, 128];
             store.set("payload", Value::Data(bytes.clone())).unwrap();
-            assert_eq!(
-                store.get("payload").unwrap(),
-                Some(Value::Data(bytes))
-            );
+            assert_eq!(store.get("payload").unwrap(), Some(Value::Data(bytes)));
             store.set("payload", Value::Data(vec![])).unwrap();
-            assert_eq!(
-                store.get("payload").unwrap(),
-                Some(Value::Data(vec![]))
-            );
+            assert_eq!(store.get("payload").unwrap(), Some(Value::Data(vec![])));
         }
 
         #[test]
@@ -700,10 +683,7 @@ mod tests {
             let store = fresh_store("overwrite");
             store.set("k", Value::Int(1)).unwrap();
             store.set("k", Value::String("two".into())).unwrap();
-            assert_eq!(
-                store.get("k").unwrap(),
-                Some(Value::String("two".into()))
-            );
+            assert_eq!(store.get("k").unwrap(), Some(Value::String("two".into())));
         }
 
         #[test]

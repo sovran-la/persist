@@ -6,13 +6,12 @@ mod store;
 mod value;
 
 pub use error::Error;
-pub use store::{FileBackedStore, Format, Store};
+#[cfg(target_os = "android")]
+pub use store::shared_preferences::init_android;
 #[cfg(feature = "json")]
 pub use store::JsonFileStore;
 #[cfg(target_os = "android")]
 pub use store::SharedPreferencesStore;
-#[cfg(target_os = "android")]
-pub use store::shared_preferences::init_android;
 #[cfg(feature = "toml")]
 pub use store::TomlFileStore;
 #[cfg(any(
@@ -22,6 +21,7 @@ pub use store::TomlFileStore;
     target_os = "watchos"
 ))]
 pub use store::UserDefaultsStore;
+pub use store::{FileBackedStore, Format, Store};
 #[cfg(target_arch = "wasm32")]
 pub use store::{PersistenceState, WebStore};
 pub use value::{CoerceFrom, Value};

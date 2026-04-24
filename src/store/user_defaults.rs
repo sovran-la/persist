@@ -10,9 +10,7 @@ use std::collections::HashMap;
 use objc2::rc::{autoreleasepool, Retained};
 use objc2::runtime::AnyObject;
 use objc2::AnyThread;
-use objc2_foundation::{
-    NSArray, NSData, NSDictionary, NSNull, NSNumber, NSString, NSUserDefaults,
-};
+use objc2_foundation::{NSArray, NSData, NSDictionary, NSNull, NSNumber, NSString, NSUserDefaults};
 
 use crate::error::Error;
 use crate::store::Store;
@@ -44,11 +42,8 @@ impl UserDefaultsStore {
             None => NSUserDefaults::standardUserDefaults(),
             Some(name) => {
                 let ns_name = NSString::from_str(name);
-                NSUserDefaults::initWithSuiteName(
-                    NSUserDefaults::alloc(),
-                    Some(&ns_name),
-                )
-                .expect("initWithSuiteName returned nil — suite name is reserved")
+                NSUserDefaults::initWithSuiteName(NSUserDefaults::alloc(), Some(&ns_name))
+                    .expect("initWithSuiteName returned nil — suite name is reserved")
             }
         }
     }
@@ -161,8 +156,7 @@ fn value_to_ns_object(value: Value) -> Result<Retained<AnyObject>, Error> {
             }
             let key_refs: Vec<&NSString> = keys.iter().map(|k| &**k).collect();
             let val_refs: Vec<&AnyObject> = values.iter().map(|v| &**v).collect();
-            let dict =
-                NSDictionary::<NSString, AnyObject>::from_slices(&key_refs, &val_refs);
+            let dict = NSDictionary::<NSString, AnyObject>::from_slices(&key_refs, &val_refs);
             Retained::<NSDictionary<NSString, AnyObject>>::into(dict)
         }
     })
@@ -199,9 +193,9 @@ fn any_object_to_value(obj: &AnyObject) -> Result<Value, Error> {
         let (keys, values) = dict.to_vecs();
         let mut out = HashMap::with_capacity(keys.len());
         for (key_obj, val_obj) in keys.into_iter().zip(values.into_iter()) {
-            let key_str = key_obj.downcast_ref::<NSString>().ok_or_else(|| {
-                Error::Parse("NSDictionary key is not an NSString".into())
-            })?;
+            let key_str = key_obj
+                .downcast_ref::<NSString>()
+                .ok_or_else(|| Error::Parse("NSDictionary key is not an NSString".into()))?;
             let key = ns_string_to_rust(key_str);
             out.insert(key, any_object_to_value(&val_obj)?);
         }
@@ -248,10 +242,7 @@ fn ns_number_to_value(num: &NSNumber) -> Value {
 /// `"c"` (char), so objCType alone is not sufficient.
 fn is_boolean(num: &NSNumber) -> bool {
     let reference = NSNumber::numberWithBool(true);
-    std::ptr::eq(
-        num.class() as *const _,
-        reference.class() as *const _,
-    )
+    std::ptr::eq(num.class() as *const _, reference.class() as *const _)
 }
 
 #[cfg(test)]
@@ -475,10 +466,7 @@ mod tests {
 
         store.set(&key, Value::Int(1)).unwrap();
         store.set(&key, Value::String("two".into())).unwrap();
-        assert_eq!(
-            store.get(&key).unwrap(),
-            Some(Value::String("two".into()))
-        );
+        assert_eq!(store.get(&key).unwrap(), Some(Value::String("two".into())));
 
         store.delete(&key).unwrap();
     }
@@ -495,10 +483,10 @@ mod tests {
 
         let mut obj2 = HashMap::new();
         obj2.insert("id".into(), Value::Int(2));
-        obj2.insert("tags".into(), Value::Array(vec![
-            Value::String("a".into()),
-            Value::String("b".into()),
-        ]));
+        obj2.insert(
+            "tags".into(),
+            Value::Array(vec![Value::String("a".into()), Value::String("b".into())]),
+        );
 
         let arr = Value::Array(vec![Value::Object(obj1), Value::Object(obj2)]);
         store.set(&key, arr.clone()).unwrap();
@@ -514,19 +502,21 @@ mod tests {
         let key = format!("{prefix}_k");
 
         let mut map = HashMap::new();
-        map.insert("nums".into(), Value::Array(vec![
-            Value::Int(1),
-            Value::Int(2),
-            Value::Int(3),
-        ]));
+        map.insert(
+            "nums".into(),
+            Value::Array(vec![Value::Int(1), Value::Int(2), Value::Int(3)]),
+        );
         let mut inner = HashMap::new();
         inner.insert("x".into(), Value::Float(1.5));
         map.insert("inner".into(), Value::Object(inner));
-        map.insert("mixed".into(), Value::Array(vec![
-            Value::Bool(true),
-            Value::String("hi".into()),
-            Value::Int(42),
-        ]));
+        map.insert(
+            "mixed".into(),
+            Value::Array(vec![
+                Value::Bool(true),
+                Value::String("hi".into()),
+                Value::Int(42),
+            ]),
+        );
 
         let obj = Value::Object(map);
         store.set(&key, obj.clone()).unwrap();

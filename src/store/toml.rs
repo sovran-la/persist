@@ -93,8 +93,7 @@ impl Format for TomlFormat {
     }
 
     fn deserialize(text: &str) -> Result<HashMap<String, Value>, Error> {
-        let table: toml::Table =
-            toml::from_str(text).map_err(|e| Error::Parse(e.to_string()))?;
+        let table: toml::Table = toml::from_str(text).map_err(|e| Error::Parse(e.to_string()))?;
         Ok(table
             .into_iter()
             .map(|(k, v)| (k, toml_to_value(v)))

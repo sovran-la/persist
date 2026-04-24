@@ -13,8 +13,7 @@ pub type JsonFileStore = FileBackedStore<JsonFormat>;
 impl Format for JsonFormat {
     fn serialize(data: &HashMap<String, Value>) -> Result<String, Error> {
         let root = serde_json::Value::from(Value::Object(data.clone()));
-        let mut s = serde_json::to_string_pretty(&root)
-            .map_err(|e| Error::Parse(e.to_string()))?;
+        let mut s = serde_json::to_string_pretty(&root).map_err(|e| Error::Parse(e.to_string()))?;
         s.push('\n');
         Ok(s)
     }
@@ -23,10 +22,9 @@ impl Format for JsonFormat {
         let json: serde_json::Value =
             serde_json::from_str(text).map_err(|e| Error::Parse(e.to_string()))?;
         match json {
-            serde_json::Value::Object(obj) => Ok(obj
-                .into_iter()
-                .map(|(k, v)| (k, Value::from(v)))
-                .collect()),
+            serde_json::Value::Object(obj) => {
+                Ok(obj.into_iter().map(|(k, v)| (k, Value::from(v))).collect())
+            }
             _ => Err(Error::Parse("JSON root must be an object".into())),
         }
     }
@@ -71,10 +69,7 @@ mod tests {
     fn round_trip_null_in_arrays() {
         // Null values survive in nested structures (arrays, objects).
         let mut data = HashMap::new();
-        data.insert(
-            "arr".into(),
-            Value::Array(vec![Value::Null, Value::Int(1)]),
-        );
+        data.insert("arr".into(), Value::Array(vec![Value::Null, Value::Int(1)]));
         round_trip(data);
     }
 
@@ -181,10 +176,7 @@ mod tests {
         data.insert("tls".into(), Value::Object(inner));
         data.insert(
             "keys".into(),
-            Value::Array(vec![
-                Value::Data(vec![1, 2, 3]),
-                Value::Data(vec![4, 5, 6]),
-            ]),
+            Value::Array(vec![Value::Data(vec![1, 2, 3]), Value::Data(vec![4, 5, 6])]),
         );
         round_trip(data);
     }
