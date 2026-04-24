@@ -18,7 +18,7 @@ fn hex_encode(bytes: &[u8]) -> String {
 }
 
 fn hex_decode(s: &str) -> Option<Vec<u8>> {
-    if s.len() % 2 != 0 {
+    if !s.len().is_multiple_of(2) {
         return None;
     }
     (0..s.len())
@@ -158,7 +158,7 @@ mod tests {
     #[test]
     fn round_trip_float() {
         let mut data = HashMap::new();
-        data.insert("pi".into(), Value::Float(3.14));
+        data.insert("pi".into(), Value::Float(3.25));
         data.insert("neg".into(), Value::Float(-1.5));
         round_trip(data);
     }
@@ -344,7 +344,7 @@ mod tests {
         let store = TomlFileStore::new(&path);
         store.set("bool", Value::Bool(true)).unwrap();
         store.set("int", Value::Int(42)).unwrap();
-        store.set("float", Value::Float(3.14)).unwrap();
+        store.set("float", Value::Float(3.25)).unwrap();
         store.set("string", Value::String("hello".into())).unwrap();
         store.set("data", Value::Data(vec![1, 2, 3])).unwrap();
 
@@ -352,7 +352,7 @@ mod tests {
         let store = TomlFileStore::new(&path);
         assert_eq!(store.get("bool").unwrap(), Some(Value::Bool(true)));
         assert_eq!(store.get("int").unwrap(), Some(Value::Int(42)));
-        assert_eq!(store.get("float").unwrap(), Some(Value::Float(3.14)));
+        assert_eq!(store.get("float").unwrap(), Some(Value::Float(3.25)));
         assert_eq!(
             store.get("string").unwrap(),
             Some(Value::String("hello".into()))

@@ -197,9 +197,9 @@ mod tests {
     #[test]
     fn set_and_get_float() {
         let p = test_persist();
-        p.set("pi", 3.14f64).unwrap();
+        p.set("pi", 3.25f64).unwrap();
         let val = p.get("pi").unwrap();
-        assert_eq!(val, Some(Value::Float(3.14)));
+        assert_eq!(val, Some(Value::Float(3.25)));
     }
 
     #[test]

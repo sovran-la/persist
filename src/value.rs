@@ -398,13 +398,13 @@ mod tests {
 
     #[test]
     fn from_f64() {
-        assert_eq!(Value::from(3.14f64), Value::Float(3.14));
+        assert_eq!(Value::from(3.25f64), Value::Float(3.25));
         assert_eq!(Value::from(0.0f64), Value::Float(0.0));
     }
 
     #[test]
     fn from_f32() {
-        assert_eq!(Value::from(3.14f32), Value::Float(3.14f32 as f64));
+        assert_eq!(Value::from(3.25f32), Value::Float(3.25f32 as f64));
     }
 
     #[test]
@@ -455,7 +455,7 @@ mod tests {
         assert_eq!(Value::Null.to_string(), "null");
         assert_eq!(Value::Bool(true).to_string(), "true");
         assert_eq!(Value::Int(42).to_string(), "42");
-        assert_eq!(Value::Float(3.14).to_string(), "3.14");
+        assert_eq!(Value::Float(3.25).to_string(), "3.25");
         assert_eq!(Value::String("hi".into()).to_string(), "hi");
         assert_eq!(Value::Data(vec![0; 5]).to_string(), "<5 bytes>");
     }
@@ -464,7 +464,7 @@ mod tests {
 
     #[test]
     fn try_from_bool_strict() {
-        assert_eq!(bool::try_from(Value::Bool(true)).unwrap(), true);
+        assert!(bool::try_from(Value::Bool(true)).unwrap());
         assert!(bool::try_from(Value::Int(1)).is_err());
     }
 
@@ -477,7 +477,7 @@ mod tests {
 
     #[test]
     fn try_from_f64_strict() {
-        assert_eq!(f64::try_from(Value::Float(3.14)).unwrap(), 3.14);
+        assert_eq!(f64::try_from(Value::Float(3.25)).unwrap(), 3.25);
         assert!(f64::try_from(Value::Int(3)).is_err());
     }
 
@@ -524,27 +524,18 @@ mod tests {
 
     #[test]
     fn coerce_bool_from_int() {
-        assert_eq!(bool::coerce_from(Value::Int(0)).unwrap(), false);
-        assert_eq!(bool::coerce_from(Value::Int(1)).unwrap(), true);
+        assert!(!bool::coerce_from(Value::Int(0)).unwrap());
+        assert!(bool::coerce_from(Value::Int(1)).unwrap());
         assert!(bool::coerce_from(Value::Int(42)).is_err());
     }
 
     #[test]
     fn coerce_bool_from_string() {
-        assert_eq!(
-            bool::coerce_from(Value::String("true".into())).unwrap(),
-            true
-        );
-        assert_eq!(
-            bool::coerce_from(Value::String("false".into())).unwrap(),
-            false
-        );
-        assert_eq!(
-            bool::coerce_from(Value::String("TRUE".into())).unwrap(),
-            true
-        );
-        assert_eq!(bool::coerce_from(Value::String("1".into())).unwrap(), true);
-        assert_eq!(bool::coerce_from(Value::String("0".into())).unwrap(), false);
+        assert!(bool::coerce_from(Value::String("true".into())).unwrap());
+        assert!(!bool::coerce_from(Value::String("false".into())).unwrap());
+        assert!(bool::coerce_from(Value::String("TRUE".into())).unwrap());
+        assert!(bool::coerce_from(Value::String("1".into())).unwrap());
+        assert!(!bool::coerce_from(Value::String("0".into())).unwrap());
         assert!(bool::coerce_from(Value::String("maybe".into())).is_err());
     }
 
@@ -586,8 +577,8 @@ mod tests {
     #[test]
     fn coerce_f64_from_string() {
         assert_eq!(
-            f64::coerce_from(Value::String("3.14".into())).unwrap(),
-            3.14
+            f64::coerce_from(Value::String("3.25".into())).unwrap(),
+            3.25
         );
         assert!(f64::coerce_from(Value::String("nope".into())).is_err());
     }
@@ -595,7 +586,7 @@ mod tests {
     #[test]
     fn coerce_string_from_scalars() {
         assert_eq!(String::coerce_from(Value::Int(42)).unwrap(), "42");
-        assert_eq!(String::coerce_from(Value::Float(3.14)).unwrap(), "3.14");
+        assert_eq!(String::coerce_from(Value::Float(3.25)).unwrap(), "3.25");
         assert_eq!(String::coerce_from(Value::Bool(true)).unwrap(), "true");
         assert_eq!(String::coerce_from(Value::Null).unwrap(), "null");
     }

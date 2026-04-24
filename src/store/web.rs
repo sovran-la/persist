@@ -232,8 +232,8 @@ mod tests {
     fn set_and_get_float() {
         let ns = unique_namespace("set_get_float");
         let store = WebStore::new(&ns);
-        store.set("pi", Value::Float(3.14)).unwrap();
-        assert_eq!(store.get("pi").unwrap(), Some(Value::Float(3.14)));
+        store.set("pi", Value::Float(3.25)).unwrap();
+        assert_eq!(store.get("pi").unwrap(), Some(Value::Float(3.25)));
         clear_namespace(&ns);
     }
 

@@ -273,7 +273,7 @@ mod tests {
 
     #[test]
     fn serde_float() {
-        json_round_trip(Value::Float(3.14));
+        json_round_trip(Value::Float(3.25));
         json_round_trip(Value::Float(0.0));
         json_round_trip(Value::Float(-1.5));
     }
@@ -336,7 +336,7 @@ mod tests {
             Value::Bool(true)
         );
         assert_eq!(Value::from(serde_json::json!(42)), Value::Int(42));
-        assert_eq!(Value::from(serde_json::json!(3.14)), Value::Float(3.14));
+        assert_eq!(Value::from(serde_json::json!(3.25)), Value::Float(3.25));
         assert_eq!(
             Value::from(serde_json::json!("hello")),
             Value::String("hello".into())
@@ -358,8 +358,8 @@ mod tests {
             serde_json::json!(42)
         );
         assert_eq!(
-            serde_json::Value::from(Value::Float(3.14)),
-            serde_json::json!(3.14)
+            serde_json::Value::from(Value::Float(3.25)),
+            serde_json::json!(3.25)
         );
         assert_eq!(
             serde_json::Value::from(Value::String("hello".into())),
@@ -430,7 +430,7 @@ mod tests {
         let mut root = HashMap::new();
         root.insert("name".into(), Value::String("Brandon".into()));
         root.insert("age".into(), Value::Int(42));
-        root.insert("pi".into(), Value::Float(3.14));
+        root.insert("pi".into(), Value::Float(3.25));
         root.insert(
             "tags".into(),
             Value::Array(vec![Value::String("a".into()), Value::Int(1)]),
