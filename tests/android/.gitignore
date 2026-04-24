@@ -1,0 +1,10 @@
+# Gradle
+.gradle/
+build/
+local.properties
+
+# Native lib output (built by cargo-ndk)
+app/src/main/jniLibs/
+
+# Cargo
+target/
