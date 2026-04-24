@@ -1,3 +1,4 @@
+mod convert;
 mod error;
 #[cfg(feature = "serde")]
 mod serde_compat;
@@ -8,6 +9,10 @@ pub use error::Error;
 pub use store::{FileBackedStore, Format, Store};
 #[cfg(feature = "json")]
 pub use store::JsonFileStore;
+#[cfg(target_os = "android")]
+pub use store::SharedPreferencesStore;
+#[cfg(target_os = "android")]
+pub use store::shared_preferences::init_android;
 #[cfg(feature = "toml")]
 pub use store::TomlFileStore;
 #[cfg(any(
@@ -75,6 +80,13 @@ impl Persist {
     #[cfg(target_arch = "wasm32")]
     pub fn web(namespace: impl Into<String>) -> Self {
         Self::new(WebStore::new(namespace))
+    }
+
+    /// Convenience: Android `SharedPreferences`-backed store. Requires
+    /// [`init_android`] to have been called by the host app.
+    #[cfg(target_os = "android")]
+    pub fn shared_preferences(prefs_name: impl Into<String>) -> Self {
+        Self::new(SharedPreferencesStore::new(prefs_name))
     }
 
     /// Set a value. Accepts anything that converts Into<Value>.

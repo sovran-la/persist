@@ -1,15 +1,22 @@
 #![cfg(target_arch = "wasm32")]
 
+use std::cell::RefCell;
 use std::collections::HashMap;
-use std::sync::Mutex;
 
-use serde_json::{Map as JsonMap, Number as JsonNumber, Value as JsonValue};
-
+use crate::convert::{json_string_to_value, value_to_json_string};
 use crate::error::Error;
 use crate::store::Store;
 use crate::value::Value;
 
-const DATA_SENTINEL: &str = "$persist:data";
+/// A `RefCell` wrapper that implements `Sync`.
+///
+/// # Safety
+///
+/// This is sound because `wasm32` is single-threaded — there is no
+/// concurrent access to the inner `RefCell`. If `wasm32` gains shared-
+/// memory threading in the future, this module will need revisiting.
+struct SyncRefCell<T>(RefCell<T>);
+unsafe impl<T> Sync for SyncRefCell<T> {}
 
 /// Whether a [`WebStore`] is backed by durable storage.
 ///
@@ -32,7 +39,7 @@ pub enum PersistenceState {
 pub struct WebStore {
     namespace: String,
     persistence_state: PersistenceState,
-    memory_fallback: Mutex<HashMap<String, Value>>,
+    memory_fallback: SyncRefCell<HashMap<String, Value>>,
 }
 
 impl WebStore {
@@ -46,7 +53,7 @@ impl WebStore {
         Self {
             namespace,
             persistence_state,
-            memory_fallback: Mutex::new(HashMap::new()),
+            memory_fallback: SyncRefCell(RefCell::new(HashMap::new())),
         }
     }
 
@@ -76,7 +83,7 @@ impl Store for WebStore {
                 }
             }
             PersistenceState::MemoryOnly => {
-                let map = self.memory_fallback.lock().map_err(lock_err)?;
+                let map = self.memory_fallback.0.borrow();
                 Ok(map.get(key).cloned())
             }
         }
@@ -97,7 +104,7 @@ impl Store for WebStore {
                 Ok(())
             }
             PersistenceState::MemoryOnly => {
-                let mut map = self.memory_fallback.lock().map_err(lock_err)?;
+                let mut map = self.memory_fallback.0.borrow_mut();
                 map.insert(key.to_owned(), value);
                 Ok(())
             }
@@ -117,7 +124,7 @@ impl Store for WebStore {
                 Ok(existed)
             }
             PersistenceState::MemoryOnly => {
-                let mut map = self.memory_fallback.lock().map_err(lock_err)?;
+                let mut map = self.memory_fallback.0.borrow_mut();
                 Ok(map.remove(key).is_some())
             }
         }
@@ -132,7 +139,7 @@ impl Store for WebStore {
                 Ok(storage.get_item(&full_key).map_err(js_err)?.is_some())
             }
             PersistenceState::MemoryOnly => {
-                let map = self.memory_fallback.lock().map_err(lock_err)?;
+                let map = self.memory_fallback.0.borrow();
                 Ok(map.contains_key(key))
             }
         }
@@ -148,108 +155,6 @@ fn js_err(value: wasm_bindgen::JsValue) -> Error {
     Error::Custom(format!("localStorage error: {:?}", value))
 }
 
-fn lock_err<T>(_: std::sync::PoisonError<T>) -> Error {
-    Error::Custom("memory fallback mutex poisoned".into())
-}
-
-fn value_to_json_string(value: &Value) -> Result<String, Error> {
-    let json = value_to_json(value);
-    serde_json::to_string(&json)
-        .map_err(|e| Error::Parse(format!("serialize value to JSON: {e}")))
-}
-
-fn json_string_to_value(s: &str) -> Result<Value, Error> {
-    let json: JsonValue = serde_json::from_str(s)
-        .map_err(|e| Error::Parse(format!("parse JSON from localStorage: {e}")))?;
-    json_to_value(json)
-}
-
-fn value_to_json(value: &Value) -> JsonValue {
-    match value {
-        Value::Null => JsonValue::Null,
-        Value::Bool(b) => JsonValue::Bool(*b),
-        Value::Int(n) => JsonValue::Number((*n).into()),
-        Value::Float(n) => JsonNumber::from_f64(*n)
-            .map(JsonValue::Number)
-            .unwrap_or(JsonValue::Null),
-        Value::String(s) => JsonValue::String(s.clone()),
-        Value::Data(bytes) => {
-            let mut map = JsonMap::with_capacity(1);
-            map.insert(
-                DATA_SENTINEL.to_owned(),
-                JsonValue::String(hex_encode(bytes)),
-            );
-            JsonValue::Object(map)
-        }
-        Value::Array(arr) => JsonValue::Array(arr.iter().map(value_to_json).collect()),
-        Value::Object(obj) => {
-            let mut map = JsonMap::with_capacity(obj.len());
-            for (k, v) in obj {
-                map.insert(k.clone(), value_to_json(v));
-            }
-            JsonValue::Object(map)
-        }
-    }
-}
-
-fn json_to_value(json: JsonValue) -> Result<Value, Error> {
-    Ok(match json {
-        JsonValue::Null => Value::Null,
-        JsonValue::Bool(b) => Value::Bool(b),
-        JsonValue::Number(n) => {
-            if let Some(i) = n.as_i64() {
-                Value::Int(i)
-            } else if let Some(f) = n.as_f64() {
-                Value::Float(f)
-            } else {
-                return Err(Error::Parse(format!("unrepresentable JSON number: {n}")));
-            }
-        }
-        JsonValue::String(s) => Value::String(s),
-        JsonValue::Array(arr) => {
-            let mut out = Vec::with_capacity(arr.len());
-            for item in arr {
-                out.push(json_to_value(item)?);
-            }
-            Value::Array(out)
-        }
-        JsonValue::Object(map) => {
-            // Detect Data sentinel: a single-key object with key DATA_SENTINEL
-            // mapping to a hex string.
-            if map.len() == 1 {
-                if let Some(JsonValue::String(hex)) = map.get(DATA_SENTINEL) {
-                    let bytes = hex_decode(hex).ok_or_else(|| {
-                        Error::Parse("invalid hex in Data sentinel".into())
-                    })?;
-                    return Ok(Value::Data(bytes));
-                }
-            }
-            let mut out = HashMap::with_capacity(map.len());
-            for (k, v) in map {
-                out.insert(k, json_to_value(v)?);
-            }
-            Value::Object(out)
-        }
-    })
-}
-
-fn hex_encode(bytes: &[u8]) -> String {
-    let mut s = String::with_capacity(bytes.len() * 2);
-    for b in bytes {
-        s.push_str(&format!("{:02x}", b));
-    }
-    s
-}
-
-fn hex_decode(s: &str) -> Option<Vec<u8>> {
-    if s.len() % 2 != 0 {
-        return None;
-    }
-    (0..s.len())
-        .step_by(2)
-        .map(|i| u8::from_str_radix(&s[i..i + 2], 16).ok())
-        .collect()
-}
 
 #[cfg(test)]
 mod tests {
@@ -542,25 +447,6 @@ mod tests {
             Some(Value::String("hello".into()))
         );
         clear_namespace(&ns);
-    }
-
-    #[wasm_bindgen_test]
-    fn hex_encode_decode_round_trip() {
-        let data: Vec<u8> = (0u8..=255u8).collect();
-        let s = hex_encode(&data);
-        assert_eq!(s.len(), 512);
-        let back = hex_decode(&s).unwrap();
-        assert_eq!(back, data);
-    }
-
-    #[wasm_bindgen_test]
-    fn hex_decode_rejects_odd_length() {
-        assert!(hex_decode("abc").is_none());
-    }
-
-    #[wasm_bindgen_test]
-    fn hex_decode_rejects_non_hex() {
-        assert!(hex_decode("zz").is_none());
     }
 
     #[wasm_bindgen_test]

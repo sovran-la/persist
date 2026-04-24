@@ -1,6 +1,8 @@
 mod file_backed;
 #[cfg(feature = "json")]
 pub mod json;
+#[cfg(target_os = "android")]
+pub mod shared_preferences;
 #[cfg(feature = "toml")]
 pub mod toml;
 #[cfg(any(
@@ -19,6 +21,8 @@ use crate::Value;
 pub use file_backed::{FileBackedStore, Format};
 #[cfg(feature = "json")]
 pub use json::JsonFileStore;
+#[cfg(target_os = "android")]
+pub use shared_preferences::SharedPreferencesStore;
 #[cfg(feature = "toml")]
 pub use toml::TomlFileStore;
 #[cfg(any(
