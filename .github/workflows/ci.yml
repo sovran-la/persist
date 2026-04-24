@@ -204,11 +204,15 @@ jobs:
 
       - name: Set up Gradle
         uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.9'
 
       - name: Run instrumented tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 29
+          api-level: 31
           arch: x86_64
+          emulator-boot-timeout: 600
+          disable-animations: true
           working-directory: tests/android
           script: gradle connectedAndroidTest
