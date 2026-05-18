@@ -1,6 +1,17 @@
 # persist
 
+[![crates.io](https://img.shields.io/crates/v/persist.svg)](https://crates.io/crates/persist)
+[![docs.rs](https://docs.rs/persist/badge.svg)](https://docs.rs/persist)
+[![MIT licensed](https://img.shields.io/crates/l/persist.svg)](./LICENSE)
+
 Cross-platform key-value persistence for Rust. One API, pluggable backends.
+
+## Install
+
+```toml
+[dependencies]
+persist = { version = "1", features = ["json"] }
+```
 
 ```rust
 let p = Persist::json("settings.json");
@@ -62,7 +73,6 @@ let n: i64 = p.get_coerce("n")?.unwrap();           // "42" → 42
 ## Features
 
 ```toml
-[dependencies]
 persist = "1"                          # core only (bring your own Store impl)
 persist = { version = "1", features = ["json"] }   # + JsonFileStore
 persist = { version = "1", features = ["toml"] }   # + TomlFileStore
